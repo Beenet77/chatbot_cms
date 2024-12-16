@@ -1,13 +1,14 @@
 import requests
-
-GEMINI_API_KEY = "AIzaSyDUnO0E42RWNptjaN0jI402mUdjCbGxSJw"
-GEMINI_API_URL = "https://api.gemini.com/v1"
+from django.conf import settings
 
 def get_stock_info(symbol):
     try:
+        # Get API key from settings which loads from .env
+        api_key = settings.GEMINI_API_KEY
+        
         response = requests.get(
-            f"{GEMINI_API_URL}/ticker/{symbol}",
-            headers={"Authorization": f"Bearer {GEMINI_API_KEY}"}
+            f"https://api.gemini.com/v1/ticker/{symbol}",
+            headers={"Authorization": f"Bearer {api_key}"}
         )
         response.raise_for_status()
         return response.json()
