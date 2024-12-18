@@ -8,13 +8,28 @@ const Chatbot = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [language, setLanguage] = useState("en");
   const [isLoading, setIsLoading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(null);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+  const fetchLogo = async () => {
+    try {
+      const response = await axios.get("http://127.0.0.1:8000/api/logo/");
+      console.log("called");
+      console.log("###########################", response.data.data);
+      setLogoUrl(response.data.data);
+    } catch (error) {
+      console.error("Error fetching logo:", error);
+    }
+  };
 
   useEffect(() => {
+    console.log("fetch");
+    fetchLogo();
+    console.log("scroll");
+
     scrollToBottom();
   }, [messages]);
 
@@ -79,8 +94,21 @@ const Chatbot = () => {
           onClick={() => setIsOpen(true)}
           aria-label="Open chat"
         >
-          <span role="img" aria-label="chat">
+          {/* <span role="img" aria-label="chat">
             💬
+          </span>{" "} */}
+          <span role="img" aria-label="chat">
+            {/* {console.log(logoUrl)} */}
+            {logoUrl ? (
+              <img
+              src={`http://127.0.0.1:8000${logoUrl}`}
+                alt="Logo"
+                style={{ width: "24px", height: "24px" }}
+                onError={(e) => console.error("Image failed to load", e)}
+              />
+            ) : (
+              "💬" // Fallback emoji if logo is not loaded
+            )}
           </span>{" "}
           {language === "en" ? "NEPSE Assistant" : "NEPSE Sahayog"}
         </button>

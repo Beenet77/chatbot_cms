@@ -1,5 +1,7 @@
 from django.contrib import admin
 from .models import CMSContent, ChatMessage
+from .models import Logo
+from django.utils.html import format_html
 
 @admin.register(CMSContent)
 class CMSContentAdmin(admin.ModelAdmin):
@@ -38,3 +40,28 @@ class ChatMessageAdmin(admin.ModelAdmin):
 
 
 # Register your models here.
+class LogoAdmin(admin.ModelAdmin):
+    # Display 'id' and the custom 'logo_image' method in the table (list view)
+    list_display = ('id', 'logo_image')
+    fields = ('logo',)  # Specify the fields to be shown in the edit form
+
+    # Custom method to render the logo image in the admin panel
+    def logo_image(self, obj):
+        """
+        Display the logo image in the admin list view.
+        """
+        if obj.logo:  # Check if the object has a logo
+            return format_html(f'<img src="{obj.logo.url}" width="100" height="100" style="object-fit:contain;" />', )
+        return "No Image"
+
+    # Short description for the column in the admin panel
+    logo_image.short_description = 'Logo Image'
+
+    # Restrict adding more than one logo
+    def has_add_permission(self, request):
+        if Logo.objects.count() >= 1:  # Only one logo can be added
+            return False
+        return True
+
+# Register the Logo model with its custom admin
+admin.site.register(Logo, LogoAdmin)

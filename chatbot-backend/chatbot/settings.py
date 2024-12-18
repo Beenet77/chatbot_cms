@@ -36,6 +36,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -45,9 +46,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',
     'corsheaders',
-    'jazzmin',
-    # 'django.contrib.admin',
-    # [...]
+  
+
 ]
 
 MIDDLEWARE = [
@@ -250,5 +250,7 @@ JAZZMIN_UI_TWEAKS = {
     }
 }
 
+MEDIA_URL = '/media/'  # URL to access media files
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 

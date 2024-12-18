@@ -1,11 +1,15 @@
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import CMSContent, ChatMessage
-from .serializers import CMSContentSerializer, ChatMessageSerializer
+from .models import CMSContent, ChatMessage , Logo
+from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
+from .serializers import CMSContentSerializer, ChatMessageSerializer, LogoSerializer
 import google.generativeai as genai
 from django.conf import settings
 import json
+
+
+
 
 # Configure Gemini API
 genai.configure(api_key=settings.GEMINI_API_KEY)
@@ -76,7 +80,7 @@ class HandleChatView(APIView):
             system_prompt = f"""You are a helpful assistant that provides information about NEPSE (Nepal Stock Exchange).
             First, check if the answer exists in this CMS context: {context}
             If not found in CMS, provide a general response about NEPSE.
-            Always respond in English but answer in nepali if some one asks you in nepali or romanized nepali.
+            Always respond in English.
             If you don't have specific information, provide general guidance about NEPSE trading."""
 
         try:
@@ -107,3 +111,19 @@ class HandleChatView(APIView):
                 "bot_response": error_message,
                 "source": "error"
             }, status=500)
+class LogoView(APIView):
+    def get(self, request, *args, **kwargs):
+        # Fetch the latest logo
+        latest_logo = Logo.objects.last()
+        print('##############################',latest_logo.logo.url,'##############################')
+        
+        if latest_logo:
+            # Serialize the logo with its full URL
+           
+            return Response({
+              'data':latest_logo.logo.url,
+            })
+            # return Response(serializer.data, status=HTTP_200_OK)
+        else:
+            # Return a 404 response if no logo exists
+            return Response({"error": "No logo found"}, status=HTTP_404_NOT_FOUND)

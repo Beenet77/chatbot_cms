@@ -22,4 +22,15 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"Message at {self.timestamp}"
+class Logo(models.Model):
+    logo = models.ImageField(upload_to='logos/', verbose_name="Logo Image")
+
+    class Meta:
+        verbose_name = "Logo"
+        verbose_name_plural = "Logos"
+        ordering = ['-id']
+
+    def __str__(self):
+        return f"Logo ID: {self.id} "
+  
 
