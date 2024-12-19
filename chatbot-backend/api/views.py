@@ -163,13 +163,15 @@ class LogoView(APIView):
             return Response({"error": "No logo found"}, status=HTTP_404_NOT_FOUND)
         
 class HandleChatUser(APIView):
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
+        print("Request data:", request.data)  # Debugging line
         user_name = request.data.get('user_name')
         user_email = request.data.get('user_email')
+
         if not user_name or not user_email:
             return Response({'error': 'user_name and user_email are required'}, status=400)
+
         try:
-            # Create a user without a password
             user = User.objects.create(
                 username=user_name,
                 email=user_email,

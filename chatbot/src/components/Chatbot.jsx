@@ -125,14 +125,14 @@ const Chatbot = () => {
     try {
       // First, send user info to the registration route
       const userResponse = await axios.post(
-        "http://localhost:8000/api/chat/user",
+        "http://localhost:8000/api/chat/user/",
         {
           user_name: userName,
           user_email: userEmail,
         }
       );
 
-      if (userResponse.status === 200 && userResponse.data.status === 400) {
+      if (userResponse.status === 200 || userResponse.data.status === 400) {
         // After successful registration, send initial message
         const chatResponse = await axios.post(
           "http://localhost:8000/api/chat/",

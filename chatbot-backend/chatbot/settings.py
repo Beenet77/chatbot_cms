@@ -62,6 +62,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'chatbot.urls'
+APPEND_SLASH = False
 
 TEMPLATES = [
     {
