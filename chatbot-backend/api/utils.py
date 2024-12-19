@@ -1,5 +1,7 @@
 import requests
 from django.conf import settings
+from api.models import Copyright
+
 
 def get_stock_info(symbol):
     try:
@@ -14,3 +16,11 @@ def get_stock_info(symbol):
         return response.json()
     except requests.exceptions.RequestException as e:
         return {"error": str(e)}
+    
+
+def get_copyright():
+    try:
+        copyright = Copyright.objects.first()
+        return copyright.content if copyright else "NEPSE Chatbot"
+    except Copyright.DoesNotExist:
+        return "NEPSE Chatbot"

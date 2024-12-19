@@ -7,6 +7,8 @@ from .serializers import CMSContentSerializer, ChatMessageSerializer, LogoSerial
 import google.generativeai as genai
 from django.conf import settings
 import json
+from django.contrib.auth.models import User
+from django.db import IntegrityError
 
 
 
@@ -159,3 +161,22 @@ class LogoView(APIView):
             })
         else:
             return Response({"error": "No logo found"}, status=HTTP_404_NOT_FOUND)
+        
+class HandleChatUser(APIView):
+    def post(self, request):
+        user_name = request.data.get('user_name')
+        user_email = request.data.get('user_email')
+        if not user_name or not user_email:
+            return Response({'error': 'user_name and user_email are required'}, status=400)
+        try:
+            # Create a user without a password
+            user = User.objects.create(
+                username=user_name,
+                email=user_email,
+            )
+            user.save()
+            return Response({'message': 'User created successfully', 'user_id': user.id}, status=200)
+        except IntegrityError:
+            return Response({'error': 'A user with this username or email already exists'}, status=400)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)

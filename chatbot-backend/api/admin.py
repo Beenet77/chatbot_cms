@@ -1,18 +1,18 @@
 from django.contrib import admin
 from .models import CMSContent, ChatMessage
-from .models import Logo
+from .models import Logo,Copyright
 from django.utils.html import format_html
 
 @admin.register(CMSContent)
 class CMSContentAdmin(admin.ModelAdmin):
-    list_display = ('key', 'language', 'category', 'updated_at')
-    list_filter = ('language', 'category')
+    list_display = ('key', 'query', 'updated_at')
+    list_filter = ('query', )
     search_fields = ('key', 'content')
-    ordering = ('key', 'language')
+    ordering = ('key', 'query')
     readonly_fields = ('created_at', 'updated_at')
     fieldsets = (
         ('Content Information', {
-            'fields': ('key', 'language', 'category')
+            'fields': ('key', 'query')
         }),
         ('Content', {
             'fields': ('content',),
@@ -39,29 +39,32 @@ class ChatMessageAdmin(admin.ModelAdmin):
         return False  # Prevent editing chat messages
 
 
-# Register your models here.
-class LogoAdmin(admin.ModelAdmin):
-    # Display 'id' and the custom 'logo_image' method in the table (list view)
-    list_display = ('id', 'logo_image','logo_type')
-    fields = ('logo','logo_type')  # Specify the fields to be shown in the edit form
 
-    # Custom method to render the logo image in the admin panel
+class LogoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'logo_image','logo_type')
+    fields = ('logo','logo_type')
     def logo_image(self, obj):
-        """
-        Display the logo image in the admin list view.
-        """
         if obj.logo:  # Check if the object has a logo
             return format_html(f'<img src="{obj.logo.url}" width="100" height="100" style="object-fit:contain;" />', )
         return "No Image"
 
-    # Short description for the column in the admin panel
+
     logo_image.short_description = 'Logo Image'
 
-    # Restrict adding more than one logo
     def has_add_permission(self, request):
-        if Logo.objects.count() >= 2:  # Only one logo can be added
+        if Logo.objects.count() >= 2:  
             return False
         return True
 
-# Register the Logo model with its custom admin
 admin.site.register(Logo, LogoAdmin)
+
+class CopyrightAdmin(admin.ModelAdmin):
+    
+    list_display = ('id', 'content')
+    fields = ('content',)  
+    def has_add_permission(self, request):
+        if Copyright.objects.count() >= 1: 
+            return False
+        return True
+
+admin.site.register(Copyright, CopyrightAdmin)

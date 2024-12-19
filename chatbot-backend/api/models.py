@@ -11,8 +11,11 @@ class CMSContent(models.Model):
     language = models.CharField(max_length=10, choices=[
         ('en', 'English'),
         ('ne', 'Nepali')
-    ])
-    category = models.CharField(max_length=50, default='general')
+    ],
+    default='en'
+    )
+    query = models.CharField(max_length=250)
+    # category = models.CharField(max_length=50, default='general')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -38,5 +41,17 @@ class Logo(models.Model):
 
     def __str__(self):
         return f"Logo ID: {self.id} "
+  
+class Copyright(models.Model):
+    
+    content= models.CharField(max_length=30)
+
+    class Meta:
+        verbose_name = "Copyright"
+        verbose_name_plural = "Copyrights"
+       
+
+    def __str__(self):
+        return f"Copyright ID: {self.id} "
   
 

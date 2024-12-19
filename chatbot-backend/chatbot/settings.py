@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-
 # Load environment variables from .env file
 load_dotenv()
 
@@ -75,6 +74,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                
             ],
         },
     },
@@ -150,6 +150,17 @@ CORS_ALLOW_METHODS = [
 ]
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'your-default-key-here')
+# In settings.py
+from django.utils.functional import lazy
+
+def get_copyright_text():
+    try:
+        from api.models import Copyright
+        copyright_obj = Copyright.objects.first()
+        return copyright_obj.content if copyright_obj else "NEPSE Chatbot"
+    except Exception:
+        return "NEPSE Chatbot"
+
 
 JAZZMIN_SETTINGS = {
     # title of the window (Will default to current_admin_site.site_title if absent or None)
@@ -161,28 +172,22 @@ JAZZMIN_SETTINGS = {
     # Welcome text on the login screen
     "welcome_sign": "Welcome to NEPSE Chatbot Admin",
     # Copyright on the footer
-    "copyright": "NEPSE Chatbot",
+    "copyright": lazy(get_copyright_text, str)(),
     # The model admin to search from the search bar
     "search_model": "api.CMSContent",
     # Field name on user model that contains avatar ImageField/URLField/Charfield or a callable that receives the user
     "user_avatar": None,
-    ############
-    # Top Menu #
-    ############
-    # Links to put along the top menu
+   
     "topmenu_links": [
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
         {"model": "api.CMSContent"},
         {"model": "api.ChatMessage"},
     ],
-    #############
-    # Side Menu #
-    #############
-    # Whether to display the side menu
+ 
     "show_sidebar": True,
-    # Whether to aut expand the menu
+   
     "navigation_expanded": True,
-    # Custom icons for side menu apps/models
+  
     "icons": {
         "api.CMSContent": "fas fa-file-alt",
         "api.ChatMessage": "fas fa-comments",
@@ -190,31 +195,19 @@ JAZZMIN_SETTINGS = {
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
     },
-    # Icons that are used when one is not manually specified
+  
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-circle",
-    #################
-    # Related Modal #
-    #################
-    # Use modals instead of popups
+
+   
     "related_modal_active": True,
-    #############
-    # UI Tweaks #
-    #############
-    # Relative paths to custom CSS/JS scripts (must be present in static files)
+
+   
     "custom_css": None,
     "custom_js": None,
-    # Whether to show the UI customizer on the sidebar
+  
     "show_ui_builder": False,
-    ###############
-    # Change view #
-    ###############
-    # Render out the change view as a single form, or in tabs, current options are
-    # - single
-    # - horizontal_tabs (default)
-    # - vertical_tabs
-    # - collapsible
-    # - carousel
+    "show_version":False,
     "changeform_format": "horizontal_tabs",
 }
 
@@ -230,7 +223,7 @@ JAZZMIN_UI_TWEAKS = {
     "navbar_fixed": False,
     "layout_boxed": False,
     "footer_fixed": False,
-    "sidebar_fixed": False,
+    "sidebar_fixed": True,
     "sidebar": "sidebar-dark-primary",
     "sidebar_nav_small_text": False,
     "sidebar_disable_expand": False,
@@ -247,7 +240,8 @@ JAZZMIN_UI_TWEAKS = {
         "warning": "btn-warning",
         "danger": "btn-danger",
         "success": "btn-success"
-    }
+    },
+  
 }
 
 MEDIA_URL = '/media/'  # URL to access media files
