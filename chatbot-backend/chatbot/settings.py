@@ -149,7 +149,7 @@ CORS_ALLOW_METHODS = [
     "OPTIONS",
 ]
 
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'your-default-key-here')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', )
 # In settings.py
 from django.utils.functional import lazy
 
@@ -209,6 +209,7 @@ JAZZMIN_SETTINGS = {
     "show_ui_builder": False,
     "show_version":False,
     "changeform_format": "horizontal_tabs",
+    "show_version": False,
 }
 
 JAZZMIN_UI_TWEAKS = {
@@ -233,6 +234,7 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar_nav_flat_style": False,
     "theme": "default",
     "dark_mode_theme": None,
+    "show_version": False,
     "button_classes": {
         "primary": "btn-primary",
         "secondary": "btn-secondary",
