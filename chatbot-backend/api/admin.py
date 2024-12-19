@@ -42,8 +42,8 @@ class ChatMessageAdmin(admin.ModelAdmin):
 # Register your models here.
 class LogoAdmin(admin.ModelAdmin):
     # Display 'id' and the custom 'logo_image' method in the table (list view)
-    list_display = ('id', 'logo_image')
-    fields = ('logo',)  # Specify the fields to be shown in the edit form
+    list_display = ('id', 'logo_image','logo_type')
+    fields = ('logo','logo_type')  # Specify the fields to be shown in the edit form
 
     # Custom method to render the logo image in the admin panel
     def logo_image(self, obj):
@@ -59,7 +59,7 @@ class LogoAdmin(admin.ModelAdmin):
 
     # Restrict adding more than one logo
     def has_add_permission(self, request):
-        if Logo.objects.count() >= 1:  # Only one logo can be added
+        if Logo.objects.count() >= 2:  # Only one logo can be added
             return False
         return True
 

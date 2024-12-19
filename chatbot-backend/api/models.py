@@ -1,5 +1,10 @@
 from django.db import models
 
+LOGO_CHOICE=(
+    ("chatbot","Chatbot Logo"),
+    ("main","Main Logo"),    
+)
+
 class CMSContent(models.Model):
     key = models.CharField(max_length=100)
     content = models.TextField()
@@ -24,6 +29,7 @@ class ChatMessage(models.Model):
         return f"Message at {self.timestamp}"
 class Logo(models.Model):
     logo = models.ImageField(upload_to='logos/', verbose_name="Logo Image")
+    logo_type= models.CharField(choices=LOGO_CHOICE,max_length=30,default="main")
 
     class Meta:
         verbose_name = "Logo"

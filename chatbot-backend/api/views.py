@@ -112,18 +112,50 @@ class HandleChatView(APIView):
                 "source": "error"
             }, status=500)
 class LogoView(APIView):
-    def get(self, request, *args, **kwargs):
-        # Fetch the latest logo
-        latest_logo = Logo.objects.last()
-        print('##############################',latest_logo.logo.url,'##############################')
+    def get_logo(self, logo_type):
+        """
+        Helper method to fetch a logo by type.
+        Returns the first matching logo or None.
+        """
         
-        if latest_logo:
-            # Serialize the logo with its full URL
-           
+
+    def get(self, request, *args, **kwargs):
+        # Fetch logos
+        try:
+            mascot_logo = Logo.objects.get(logo_type="chatbot")
+            print("*****",mascot_logo)
+        except Logo.DoesNotExist:
+            mascot_logo = None
+        except Logo.MultipleObjectsReturned:
+            mascot_logo = Logo.objects.filter(logo_type="chatbot").first()
+
+
+        try:
+            
+            main_logo = Logo.objects.get(logo_type="main")
+        except Logo.DoesNotExist:
+            main_logo = None
+        except Logo.MultipleObjectsReturned:
+            main_logo = Logo.objects.filter(logo_type="main").first()
+       
+        print(f"############################## {mascot_logo.logo.url} ##############################")
+        print(f"############################## {main_logo.logo.url} ##############################")
+        
+     
+        
+        # Prepare the response
+        if mascot_logo and main_logo:
             return Response({
-              'data':latest_logo.logo.url,
+                'mascot_logo': mascot_logo.logo.url,
+                'main_logo': main_logo.logo.url,
             })
-            # return Response(serializer.data, status=HTTP_200_OK)
+        elif mascot_logo:
+            return Response({
+                'mascot_logo': mascot_logo.logo.url,
+            })
+        elif main_logo:
+            return Response({
+                'main_logo': main_logo.logo.url,
+            })
         else:
-            # Return a 404 response if no logo exists
             return Response({"error": "No logo found"}, status=HTTP_404_NOT_FOUND)

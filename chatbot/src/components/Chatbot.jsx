@@ -9,6 +9,7 @@ const Chatbot = () => {
   const [language, setLanguage] = useState("en");
   const [isLoading, setIsLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState(null);
+  const [masUrl, setMasUrl] = useState(null);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -18,8 +19,10 @@ const Chatbot = () => {
     try {
       const response = await axios.get("http://127.0.0.1:8000/api/logo/");
       console.log("called");
-      console.log("###########################", response.data.data);
-      setLogoUrl(response.data.data);
+      console.log("###########################", response.data);
+      setLogoUrl(response.data.main_logo);
+      // setLogoUrl(response.data.mascot_logo);
+      setMasUrl(response.data.mascot_logo);
     } catch (error) {
       console.error("Error fetching logo:", error);
     }
