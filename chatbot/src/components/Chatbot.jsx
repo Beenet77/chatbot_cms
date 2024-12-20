@@ -4,6 +4,7 @@ import "./Chatbot.css";
 import { IoSend } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
 import { RiRobot2Fill } from "react-icons/ri";
+import { IoClose } from "react-icons/io5";
 
 const DEFAULT_MASCOT =
   "https://cdn3d.iconscout.com/3d/premium/thumb/chatbot-5374800-4492376.png";
@@ -253,13 +254,13 @@ const Chatbot = () => {
               />
               <h3>NEPSE Assistant</h3>
             </div>
-            <div className="header-controls">
+            <div className="header-content">
               <button
                 className="close-button"
                 onClick={handleClose}
                 aria-label="Close chat"
               >
-                ×
+                <IoClose />
               </button>
             </div>
           </div>
@@ -398,15 +399,13 @@ const Chatbot = () => {
                     onClick={() => handleCloseConfirm(true)}
                     className="confirm-yes"
                   >
-                    {language === "en" ? "Yes, Close" : "हो, बन्द गर्नुहोस्"}
+                    {language === "en" ? "End" : "हो, बन्द गर्नुहोस्"}
                   </button>
                   <button
                     onClick={() => handleCloseConfirm(false)}
                     className="confirm-no"
                   >
-                    {language === "en"
-                      ? "No, Continue"
-                      : "होइन, जारी राख्नुहोस्"}
+                    {language === "en" ? " Continue" : "होइन, जारी राख्नुहोस्"}
                   </button>
                 </div>
               </div>
