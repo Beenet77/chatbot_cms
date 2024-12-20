@@ -18,9 +18,15 @@ const Chatbot = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState(null);
   const [masUrl, setMasUrl] = useState(null);
-  const [userEmail, setUserEmail] = useState("");
-  const [userName, setUserName] = useState("");
-  const [showForm, setShowForm] = useState(true);
+  const [userEmail, setUserEmail] = useState(
+    () => localStorage.getItem("userEmail") || ""
+  );
+  const [userName, setUserName] = useState(
+    () => localStorage.getItem("userName") || ""
+  );
+  const [showForm, setShowForm] = useState(
+    () => !localStorage.getItem("userName")
+  );
   const messagesEndRef = useRef(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
@@ -31,8 +37,18 @@ const Chatbot = () => {
   const fetchLogo = async () => {
     try {
       const response = await axios.get("http://127.0.0.1:8000/api/logo/");
-      setLogoUrl(response.data.main_logo || null);
-      setMasUrl(response.data.mascot_logo || null);
+      console.log("Logo response:", response.data);
+
+      setLogoUrl(
+        response.data.main_logo
+          ? `http://127.0.0.1:8000${response.data.main_logo}`
+          : null
+      );
+      setMasUrl(
+        response.data.mascot_logo
+          ? `http://127.0.0.1:8000${response.data.mascot_logo}`
+          : null
+      );
     } catch (error) {
       console.error("Error fetching logo:", error);
       setLogoUrl(null);
@@ -106,10 +122,16 @@ const Chatbot = () => {
 
   const formatMessage = (message) => {
     if (message.source === "cms") {
-      return message.content.split("\n\n").map((paragraph, idx) => (
-        <p key={idx} className="cms-paragraph">
-          {paragraph}
-        </p>
+      const responses = message.content.split("\n\n---\n\n");
+      return responses.map((response, idx) => (
+        <div key={idx} className="cms-response">
+          {response.split("\n\n").map((paragraph, pIdx) => (
+            <p key={pIdx} className="cms-paragraph">
+              {paragraph}
+            </p>
+          ))}
+          {idx < responses.length - 1 && <hr className="response-divider" />}
+        </div>
       ));
     }
     return message.content;
@@ -127,7 +149,6 @@ const Chatbot = () => {
     }
 
     try {
-      // First, send user info to the registration route
       const userResponse = await axios.post(
         "http://localhost:8000/api/chat/user/",
         {
@@ -137,7 +158,9 @@ const Chatbot = () => {
       );
 
       if (userResponse.status === 200 || userResponse.data.status === 400) {
-        // After successful registration, send initial message
+        localStorage.setItem("userName", userName);
+        localStorage.setItem("userEmail", userEmail);
+
         const chatResponse = await axios.post(
           "http://localhost:8000/api/chat/",
           {
@@ -159,7 +182,7 @@ const Chatbot = () => {
       alert(
         language === "en"
           ? "Error saving information. Please try again."
-          : "ज��नकारी सुरक्षित गर्न समस्या भयो। कृपया पुन: प्रयास गर्नुहोस्।"
+          : "जानकारी सुरक्षित गर्न ���मस्या भयो। कृपया पुन: प्रयास गर्नुहोस्।"
       );
     }
   };
@@ -171,9 +194,27 @@ const Chatbot = () => {
   const handleCloseConfirm = (confirmed) => {
     setShowCloseConfirm(false);
     if (confirmed) {
+      localStorage.removeItem("userName");
+      localStorage.removeItem("userEmail");
       setIsOpen(false);
+      setShowForm(true);
+      setUserName("");
+      setUserEmail("");
     }
   };
+
+  useEffect(() => {
+    const handleTabClose = () => {
+      localStorage.removeItem("userName");
+      localStorage.removeItem("userEmail");
+    };
+
+    window.addEventListener("beforeunload", handleTabClose);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleTabClose);
+    };
+  }, []);
 
   return (
     <div className="chatbot-container">
@@ -185,10 +226,11 @@ const Chatbot = () => {
         >
           <div className="mascot-container">
             <img
-              src={masUrl ? `http://127.0.0.1:8000/${masUrl}` : DEFAULT_MASCOT}
+              src={masUrl || DEFAULT_MASCOT}
               alt="AI Assistant"
               className="mascot-image"
               onError={(e) => {
+                console.log("Mascot load error, using default");
                 e.target.src = DEFAULT_MASCOT;
               }}
             />
@@ -201,14 +243,11 @@ const Chatbot = () => {
           <div className="chat-header">
             <div className="header-content">
               <img
-                src={
-                  logoUrl
-                    ? `http://127.0.0.1:8000${logoUrl}`
-                    : DEFAULT_CHAT_LOGO
-                }
+                src={logoUrl || DEFAULT_CHAT_LOGO}
                 alt="Chat Logo"
                 className="chat-logo"
                 onError={(e) => {
+                  console.log("Logo load error, using default");
                   e.target.src = DEFAULT_CHAT_LOGO;
                 }}
               />
@@ -346,7 +385,9 @@ const Chatbot = () => {
           {showCloseConfirm && (
             <div className="confirm-overlay">
               <div className="confirm-popup">
-                <h4>{language === "en" ? "Close Chat?" : "कुराकानी बन्द गर्ने?"}</h4>
+                <h4>
+                  {language === "en" ? "Close Chat?" : "कुराकानी बन्द गर्ने?"}
+                </h4>
                 <p>
                   {language === "en"
                     ? "Are you sure you want to end this chat?"
@@ -363,7 +404,9 @@ const Chatbot = () => {
                     onClick={() => handleCloseConfirm(false)}
                     className="confirm-no"
                   >
-                    {language === "en" ? "No, Continue" : "होइन, जारी राख्नुहोस्"}
+                    {language === "en"
+                      ? "No, Continue"
+                      : "होइन, जारी राख्नुहोस्"}
                   </button>
                 </div>
               </div>

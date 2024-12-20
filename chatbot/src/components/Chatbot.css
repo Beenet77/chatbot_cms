@@ -1047,3 +1047,22 @@
     transform: translateY(0);
   }
 }
+
+.cms-response {
+  margin-bottom: 12px;
+}
+
+.response-divider {
+  margin: 12px 0;
+  border: none;
+  border-top: 1px solid var(--border-color);
+  opacity: 0.5;
+}
+
+.cms-paragraph {
+  margin-bottom: 8px;
+}
+
+.cms-paragraph:last-child {
+  margin-bottom: 0;
+}

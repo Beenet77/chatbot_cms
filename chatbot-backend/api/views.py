@@ -60,52 +60,50 @@ class HandleChatView(APIView):
                     'source': 'cms'
                 })
 
-            # 2. Try key match
-            cms_content = CMSContent.objects.filter(
-                key__icontains=message,
-                language=language
-            ).first()
-
-            if cms_content:
-                ChatMessage.objects.create(
-                    user_message=message,
-                    bot_response=cms_content.content,
-                    language=language
-                )
-                return Response({
-                    'bot_response': cms_content.content,
-                    'source': 'cms'
-                })
-
-            # 3. Try keyword matching from query only
+            # 2. Try keyword matching from query
             message_words = set(message.split())
             cms_contents = CMSContent.objects.filter(language=language)
             
-            best_match = None
-            max_matches = 0
+            matches = []
             
             for content in cms_contents:
                 # Only match with query words
                 query_words = set(content.query.lower().split())
-                matches = len(message_words.intersection(query_words))
+                matching_words = len(message_words.intersection(query_words))
                 
-                if matches > max_matches:
-                    max_matches = matches
-                    best_match = content
+                if matching_words > 0:
+                    matches.append({
+                        'content': content,
+                        'matches': matching_words
+                    })
 
-            # If we found a good query word match (at least one word matches)
-            if best_match and max_matches > 0:
+            # Sort matches by number of matching words (highest first)
+            matches.sort(key=lambda x: x['matches'], reverse=True)
+
+            # If we found matches, return all relevant responses
+            if matches:
+                # Take up to 3 best matches
+                best_matches = matches[:3]
+                
+                # Combine responses with separators
+                combined_response = "\n\n---\n\n".join(
+                    [match['content'].content for match in best_matches]
+                )
+
                 ChatMessage.objects.create(
                     user_message=message,
-                    bot_response=best_match.content,
+                    bot_response=combined_response,
                     language=language
                 )
+
                 return Response({
-                    'bot_response': best_match.content,
-                    'source': 'cms'
+                    'bot_response': combined_response,
+                    'source': 'cms',
+                    'multiple_matches': True,
+                    'match_count': len(best_matches)
                 })
 
-            # 4. If no matches in CMS, use Gemini
+            # 3. If no matches in CMS, use Gemini
             prompt = f"""
             You are a NEPSE (Nepal Stock Exchange) assistant. 
             Answer the following question in {'Nepali' if language == 'ne' else 'English'} language:
