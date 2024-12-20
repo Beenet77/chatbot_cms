@@ -39,80 +39,108 @@ class GetCMSContentView(RetrieveAPIView):
 
 class HandleChatView(APIView):
     def post(self, request, *args, **kwargs):
-        user_message = request.data.get("message")
-        language = request.data.get("language", "en")
-
-        # Get relevant CMS content
-        cms_data = CMSContent.objects.filter(language=language)
-        
-        # Format CMS content as messages
-        cms_messages = []
-        for content in cms_data:
-            if content.key.lower() in user_message.lower():
-                cms_messages.append(content.content)
-
-        # If CMS content is found, return it directly
-        if cms_messages:
-            bot_response = "\n\n".join(cms_messages)
-            
-            # Log chat
-            ChatMessage.objects.create(
-                user_message=user_message,
-                bot_response=bot_response,
-                language=language
-            )
-            
-            return Response({
-                "user_message": user_message,
-                "bot_response": bot_response,
-                "source": "cms"
-            })
-
-        # If no CMS content, use Gemini
-        context = "\n".join([f"{item.key}: {item.content}" for item in cms_data])
-
-        # Prepare prompt based on language
-        if language == 'ne':
-            system_prompt = f"""You are a helpful assistant that provides information about NEPSE (Nepal Stock Exchange).
-            First, check if the answer exists in this CMS context: {context}
-            If not found in CMS, provide a general response about NEPSE.
-            Always respond in romanized Nepali.
-            If you don't have specific information, provide general guidance about NEPSE trading."""
-        else:
-            system_prompt = f"""You are a helpful assistant that provides information about NEPSE (Nepal Stock Exchange).
-            First, check if the answer exists in this CMS context: {context}
-            If not found in CMS, provide a general response about NEPSE.
-            Always respond in English.
-            If you don't have specific information, provide general guidance about NEPSE trading."""
+        message = request.data.get('message', '').lower()
+        language = request.data.get('language', 'en')
 
         try:
-            # Generate response using Gemini
-            chat = model.start_chat(history=[])
-            response = chat.send_message(f"{system_prompt}\n\nUser: {user_message}")
+            # 1. First try exact query match
+            cms_content = CMSContent.objects.filter(
+                query__iexact=message,
+                language=language
+            ).first()
+
+            if cms_content:
+                ChatMessage.objects.create(
+                    user_message=message,
+                    bot_response=cms_content.content,
+                    language=language
+                )
+                return Response({
+                    'bot_response': cms_content.content,
+                    'source': 'cms'
+                })
+
+            # 2. Try key match
+            cms_content = CMSContent.objects.filter(
+                key__icontains=message,
+                language=language
+            ).first()
+
+            if cms_content:
+                ChatMessage.objects.create(
+                    user_message=message,
+                    bot_response=cms_content.content,
+                    language=language
+                )
+                return Response({
+                    'bot_response': cms_content.content,
+                    'source': 'cms'
+                })
+
+            # 3. Try keyword matching from query only
+            message_words = set(message.split())
+            cms_contents = CMSContent.objects.filter(language=language)
+            
+            best_match = None
+            max_matches = 0
+            
+            for content in cms_contents:
+                # Only match with query words
+                query_words = set(content.query.lower().split())
+                matches = len(message_words.intersection(query_words))
+                
+                if matches > max_matches:
+                    max_matches = matches
+                    best_match = content
+
+            # If we found a good query word match (at least one word matches)
+            if best_match and max_matches > 0:
+                ChatMessage.objects.create(
+                    user_message=message,
+                    bot_response=best_match.content,
+                    language=language
+                )
+                return Response({
+                    'bot_response': best_match.content,
+                    'source': 'cms'
+                })
+
+            # 4. If no matches in CMS, use Gemini
+            prompt = f"""
+            You are a NEPSE (Nepal Stock Exchange) assistant. 
+            Answer the following question in {'Nepali' if language == 'ne' else 'English'} language:
+            {message}
+            
+            Keep the response concise and relevant to NEPSE only.
+            If the question is not related to NEPSE, politely inform that you can only answer NEPSE-related queries.
+            """
+
+            response = model.generate_content(prompt)
             bot_response = response.text
 
-            # Log chat
             ChatMessage.objects.create(
-                user_message=user_message,
+                user_message=message,
                 bot_response=bot_response,
                 language=language
             )
 
             return Response({
-                "user_message": user_message,
-                "bot_response": bot_response,
-                "source": "bot"
+                'bot_response': bot_response,
+                'source': 'gemini'
             })
 
         except Exception as e:
-            error_message = ("I apologize, but I'm having trouble processing your request right now. Please try again later." 
-                           if language == "en" 
-                           else "Maaf garnuhos, kehi prawidhik samasya aayo. Kripaya pachi prayas garnuhos.")
+            print(f"Error: {str(e)}")
+            error_message = (
+                "माफ गर्नुहोस्, केही समस्या आयो। कृपया फेरि प्रयास गर्नुहोस्।"
+                if language == "ne"
+                else "Sorry, I encountered an error. Please try again."
+            )
             return Response({
-                "user_message": user_message,
-                "bot_response": error_message,
-                "source": "error"
-            }, status=500)
+                'bot_response': error_message,
+                'source': 'error'
+            })
+
 class LogoView(APIView):
     def get_logo(self, logo_type):
         """
@@ -164,7 +192,8 @@ class LogoView(APIView):
         
 class HandleChatUser(APIView):
     def post(self, request, *args, **kwargs):
-        print("Request data:", request.data)  # Debugging line
+        print(f"Request method: {request.method}")
+        print("Request data:", request.data) 
         user_name = request.data.get('user_name')
         user_email = request.data.get('user_email')
 
@@ -179,6 +208,6 @@ class HandleChatUser(APIView):
             user.save()
             return Response({'message': 'User created successfully', 'user_id': user.id}, status=200)
         except IntegrityError:
-            return Response({'error': 'A user with this username or email already exists'}, status=400)
+            return Response({'message': 'A user with this username or email already exists'}, status=200)
         except Exception as e:
             return Response({'error': str(e)}, status=500)

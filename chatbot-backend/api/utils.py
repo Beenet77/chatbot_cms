@@ -1,6 +1,6 @@
 import requests
 from django.conf import settings
-from api.models import Copyright
+from api.models import Copyright,Logo
 
 
 def get_stock_info(symbol):
@@ -23,4 +23,10 @@ def get_copyright():
         copyright = Copyright.objects.first()
         return copyright.content if copyright else "NEPSE Chatbot"
     except Copyright.DoesNotExist:
+        return "NEPSE Chatbot"
+def get_logo():
+    try:
+        logo = Logo.objects.filter(logo_type="main").first()
+        return logo.logo if copyright else "NEPSE Chatbot"
+    except Logo.DoesNotExist:
         return "NEPSE Chatbot"

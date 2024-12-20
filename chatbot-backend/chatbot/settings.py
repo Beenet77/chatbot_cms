@@ -130,6 +130,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -161,7 +162,33 @@ def get_copyright_text():
         return copyright_obj.content if copyright_obj else "NEPSE Chatbot"
     except Exception:
         return "NEPSE Chatbot"
-
+MEDIA_URL = '/media/'  # URL to access media files
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+def get_logo_text():
+   
+    try:
+        from api.models import Logo
+      
+        logo_obj = Logo.objects.filter(logo_type="main").first()
+        
+        if logo_obj and logo_obj.logo:
+            # Construct the new logo name (renamed to 'logo')
+            logo_extension = os.path.splitext(logo_obj.logo.name)[-1]
+            logo_filename = 'logo' + logo_extension  # Always named 'logo' with the original extension
+            
+            # Use static template tag to return the relative URL of the logo in the 'logos' directory
+            logo_static_url = (f'logos/{logo_filename}')
+            print(f"Logo URL: {logo_static_url}")  # Debug the actual URL
+            
+            return logo_static_url
+        
+        return "NEPSE Chatbot"
+    
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return "NEPSE Chatbot"
+        print(f"Error occurred: {e}")
+        return "NEPSE Chatbot"
 
 JAZZMIN_SETTINGS = {
     # title of the window (Will default to current_admin_site.site_title if absent or None)
@@ -170,6 +197,8 @@ JAZZMIN_SETTINGS = {
     "site_header": "NEPSE Chatbot",
     # Title on the brand (19 chars max) (will default to current_admin_site.site_header if absent or None)
     "site_brand": "NEPSE Chatbot",
+    # "site_logo": 'logos/logo.jpg',
+    "site_logo": lazy(get_logo_text, str)(),
     # Welcome text on the login screen
     "welcome_sign": "Welcome to NEPSE Chatbot Admin",
     # Copyright on the footer
@@ -210,8 +239,9 @@ JAZZMIN_SETTINGS = {
     "show_ui_builder": False,
     "show_version":False,
     "changeform_format": "horizontal_tabs",
-    "show_version": False,
+   
 }
+
 
 JAZZMIN_UI_TWEAKS = {
     "navbar_small_text": False,
@@ -247,7 +277,6 @@ JAZZMIN_UI_TWEAKS = {
   
 }
 
-MEDIA_URL = '/media/'  # URL to access media files
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 
