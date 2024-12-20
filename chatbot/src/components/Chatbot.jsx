@@ -7,6 +7,8 @@ import { RiRobot2Fill } from "react-icons/ri";
 
 const DEFAULT_MASCOT =
   "https://cdn3d.iconscout.com/3d/premium/thumb/chatbot-5374800-4492376.png";
+const DEFAULT_CHAT_LOGO =
+  "https://cdn-icons-png.flaticon.com/512/1698/1698535.png";
 
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,6 +22,7 @@ const Chatbot = () => {
   const [userName, setUserName] = useState("");
   const [showForm, setShowForm] = useState(true);
   const messagesEndRef = useRef(null);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -28,11 +31,12 @@ const Chatbot = () => {
   const fetchLogo = async () => {
     try {
       const response = await axios.get("http://127.0.0.1:8000/api/logo/");
-      setLogoUrl(response.data.main_logo);
-      setMasUrl(response.data.mascot_logo);
+      setLogoUrl(response.data.main_logo || null);
+      setMasUrl(response.data.mascot_logo || null);
     } catch (error) {
       console.error("Error fetching logo:", error);
-      setMasUrl(DEFAULT_MASCOT);
+      setLogoUrl(null);
+      setMasUrl(null);
     }
   };
 
@@ -91,7 +95,7 @@ const Chatbot = () => {
         content:
           language === "en"
             ? "Sorry, I encountered an error. Please try again."
-            : "माफ गर्नुहोस्, ��ेही समस्या आयो। कृपया फेरि प्रयास गर्नुहोस्।",
+            : "माफ गर्नुहोस्, ही समस्या आयो। कृपया फेरि प्रयास गर्नुहोस्।",
         source: "error",
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -155,8 +159,19 @@ const Chatbot = () => {
       alert(
         language === "en"
           ? "Error saving information. Please try again."
-          : "जानकारी सुरक्षित गर्न समस्या भयो। कृपया पुन: प्रयास गर्नुहोस्।"
+          : "ज��नकारी सुरक्षित गर्न समस्या भयो। कृपया पुन: प्रयास गर्नुहोस्।"
       );
+    }
+  };
+
+  const handleClose = () => {
+    setShowCloseConfirm(true);
+  };
+
+  const handleCloseConfirm = (confirmed) => {
+    setShowCloseConfirm(false);
+    if (confirmed) {
+      setIsOpen(false);
     }
   };
 
@@ -170,7 +185,7 @@ const Chatbot = () => {
         >
           <div className="mascot-container">
             <img
-              src={`http://127.0.0.1:8000/${masUrl}`}
+              src={masUrl ? `http://127.0.0.1:8000/${masUrl}` : DEFAULT_MASCOT}
               alt="AI Assistant"
               className="mascot-image"
               onError={(e) => {
@@ -185,19 +200,24 @@ const Chatbot = () => {
         <div className="chat-window">
           <div className="chat-header">
             <div className="header-content">
-              {logoUrl && (
-                <img
-                  src={`http://127.0.0.1:8000${logoUrl}`}
-                  alt="Chat Logo"
-                  className="chat-logo"
-                />
-              )}
+              <img
+                src={
+                  logoUrl
+                    ? `http://127.0.0.1:8000${logoUrl}`
+                    : DEFAULT_CHAT_LOGO
+                }
+                alt="Chat Logo"
+                className="chat-logo"
+                onError={(e) => {
+                  e.target.src = DEFAULT_CHAT_LOGO;
+                }}
+              />
               <h3>NEPSE Assistant</h3>
             </div>
             <div className="header-controls">
               <button
                 className="close-button"
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 aria-label="Close chat"
               >
                 ×
@@ -321,6 +341,33 @@ const Chatbot = () => {
                 </button>
               </div>
             </form>
+          )}
+
+          {showCloseConfirm && (
+            <div className="confirm-overlay">
+              <div className="confirm-popup">
+                <h4>{language === "en" ? "Close Chat?" : "कुराकानी बन्द गर्ने?"}</h4>
+                <p>
+                  {language === "en"
+                    ? "Are you sure you want to end this chat?"
+                    : "के तपाईं यो कुराकानी अन्त्य गर्न चाहनुहुन्छ?"}
+                </p>
+                <div className="confirm-buttons">
+                  <button
+                    onClick={() => handleCloseConfirm(true)}
+                    className="confirm-yes"
+                  >
+                    {language === "en" ? "Yes, Close" : "हो, बन्द गर्नुहोस्"}
+                  </button>
+                  <button
+                    onClick={() => handleCloseConfirm(false)}
+                    className="confirm-no"
+                  >
+                    {language === "en" ? "No, Continue" : "होइन, जारी राख्नुहोस्"}
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       )}
