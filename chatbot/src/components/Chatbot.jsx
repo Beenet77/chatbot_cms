@@ -183,7 +183,7 @@ const Chatbot = () => {
       alert(
         language === "en"
           ? "Error saving information. Please try again."
-          : "जानकारी सुरक्षित गर्न ���मस्या भयो। कृपया पुन: प्रयास गर्नुहोस्।"
+          : "जानकारी सुरक्षित गर्न मस्या भयो। कृपया पुन: प्रयास गर्नुहोस्।"
       );
     }
   };
@@ -252,7 +252,7 @@ const Chatbot = () => {
                   e.target.src = DEFAULT_CHAT_LOGO;
                 }}
               />
-              <h3>NEPSE Assistant</h3>
+              <h3>Capital Max Chatbot</h3>
             </div>
             <div className="header-content">
               <button
@@ -270,8 +270,8 @@ const Chatbot = () => {
               <div className="user-info-form">
                 <h4>
                   {language === "en"
-                    ? "Welcome to NEPSE Assistant"
-                    : "NEPSE सहायकमा स्वागत छ"}
+                    ? "Welcome to Capital Max Assistant"
+                    : "Capital Max सहायकमा स्वागत छ"}
                 </h4>
                 <p>
                   {language === "en"
@@ -309,8 +309,8 @@ const Chatbot = () => {
                 {messages.length === 0 && (
                   <div className="welcome-message">
                     {language === "en"
-                      ? `Hello ${userName}! Ask me anything about NEPSE.`
-                      : `नमस्ते ${userName}! NEPSE को बारेमा केही सोध्नुहोस्।`}
+                      ? `Hello, I am Capital Max! Ask me anything about NEPSE.`
+                      : `नमस्ते, म Capital Max हुँ! NEPSE को बारेमा केही सोध्नुहोस्।`}
                   </div>
                 )}
                 {messages.map((message, index) => (

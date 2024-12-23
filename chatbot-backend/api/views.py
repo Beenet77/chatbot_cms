@@ -42,10 +42,23 @@ class HandleChatView(APIView):
         message = request.data.get('message', '').lower()
         language = request.data.get('language', 'en')
 
+        # Define stop words to filter out
+        stop_words = {
+            'is', 'what', 'how', 'why', 'when', 'where', 'who', 'which', 'the', 
+            'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 
+            'with', 'by', 'about', 'like', 'as', 'from', 'into', 'during', 'including',
+            'until', 'against', 'among', 'throughout', 'despite', 'towards', 'upon',
+            'tell', 'me', 'please', 'can', 'could', 'would', 'should', 'shall'
+        }
+
+        # Clean the message by removing stop words
+        message_words = [word for word in message.split() if word not in stop_words]
+        cleaned_message = ' '.join(message_words)
+
         try:
-            # 1. First try exact query match
+            # 1. First try exact query match with cleaned message
             cms_content = CMSContent.objects.filter(
-                query__iexact=message,
+                query__iexact=cleaned_message,
                 language=language
             ).first()
 
@@ -61,15 +74,17 @@ class HandleChatView(APIView):
                 })
 
             # 2. Try keyword matching from query
-            message_words = set(message.split())
+            message_words_set = set(message_words)  # Using cleaned words
             cms_contents = CMSContent.objects.filter(language=language)
             
             matches = []
             
             for content in cms_contents:
-                # Only match with query words
-                query_words = set(content.query.lower().split())
-                matching_words = len(message_words.intersection(query_words))
+                # Clean the query words as well
+                query_words = set([word for word in content.query.lower().split() 
+                                 if word not in stop_words])
+                
+                matching_words = len(message_words_set.intersection(query_words))
                 
                 if matching_words > 0:
                     matches.append({
@@ -77,15 +92,8 @@ class HandleChatView(APIView):
                         'matches': matching_words
                     })
 
-            # Sort matches by number of matching words (highest first)
-            matches.sort(key=lambda x: x['matches'], reverse=True)
-
-            # If we found matches, return all relevant responses
             if matches:
-                # Take up to 3 best matches
                 best_matches = matches[:3]
-                
-                # Combine responses with separators
                 combined_response = "\n\n---\n\n".join(
                     [match['content'].content for match in best_matches]
                 )
@@ -103,7 +111,7 @@ class HandleChatView(APIView):
                     'match_count': len(best_matches)
                 })
 
-            # 3. If no matches in CMS, use Gemini
+            # 3. If no matches, use Gemini and learn from it
             prompt = f"""
             You are a NEPSE (Nepal Stock Exchange) assistant. 
             Answer the following question in {'Nepali' if language == 'ne' else 'English'} language:
@@ -111,10 +119,27 @@ class HandleChatView(APIView):
             
             Keep the response concise and relevant to NEPSE only.
             If the question is not related to NEPSE, politely inform that you can only answer NEPSE-related queries.
+            Provide accurate and factual information only.
             """
 
             response = model.generate_content(prompt)
             bot_response = response.text
+
+            # Store the new query and response in CMS if it's a valid NEPSE-related query
+            if "only answer NEPSE-related queries" not in bot_response.lower():
+                try:
+                    # Generate a unique key from the query
+                    key = f"learned_{len(message_words)}_{hash(message)}"
+                    
+                    # Create new CMS content
+                    CMSContent.objects.create(
+                        key=key,
+                        query=message,
+                        content=bot_response,
+                        language=language
+                    )
+                except Exception as e:
+                    print(f"Learning error: {str(e)}")
 
             ChatMessage.objects.create(
                 user_message=message,
