@@ -113,7 +113,7 @@ class HandleChatView(APIView):
 
             # 3. If no matches, use Gemini and learn from it
             prompt = f"""
-            You are a NEPSE (Nepal Stock Exchange) assistant. 
+            You are a Capital Max NEPSE (Nepal Stock Exchange) assistant. 
             Answer the following question in {'Nepali' if language == 'ne' else 'English'} language:
             {message}
             
