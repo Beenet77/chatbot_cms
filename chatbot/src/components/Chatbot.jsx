@@ -11,6 +11,8 @@ const DEFAULT_MASCOT =
 const DEFAULT_CHAT_LOGO =
   "https://cdn-icons-png.flaticon.com/512/1698/1698535.png";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -37,17 +39,17 @@ const Chatbot = () => {
 
   const fetchLogo = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:8000/api/logo/");
+      const response = await axios.get(`${API_URL}/logo/`);
       console.log("Logo response:", response.data);
 
       setLogoUrl(
         response.data.main_logo
-          ? `http://127.0.0.1:8000${response.data.main_logo}`
+          ? `${API_URL.replace("/api", "")}${response.data.main_logo}`
           : null
       );
       setMasUrl(
         response.data.mascot_logo
-          ? `http://127.0.0.1:8000${response.data.mascot_logo}`
+          ? `${API_URL.replace("/api", "")}${response.data.mascot_logo}`
           : null
       );
     } catch (error) {
@@ -88,7 +90,7 @@ const Chatbot = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:8000/api/chat/", {
+      const response = await axios.post(`${API_URL}/chat/`, {
         message: inputMessage,
         language: language,
         ...(showForm && { user_name: userName, user_email: userEmail }),
@@ -150,25 +152,19 @@ const Chatbot = () => {
     }
 
     try {
-      const userResponse = await axios.post(
-        "http://localhost:8000/api/chat/user/",
-        {
-          user_name: userName,
-          user_email: userEmail,
-        }
-      );
+      const userResponse = await axios.post(`${API_URL}/chat/user/`, {
+        user_name: userName,
+        user_email: userEmail,
+      });
 
       if (userResponse.status === 200 || userResponse.data.status === 400) {
         localStorage.setItem("userName", userName);
         localStorage.setItem("userEmail", userEmail);
 
-        const chatResponse = await axios.post(
-          "http://localhost:8000/api/chat/",
-          {
-            message: language === "en" ? "Hello" : "Namaste",
-            language: language,
-          }
-        );
+        const chatResponse = await axios.post(`${API_URL}/chat/`, {
+          message: language === "en" ? "Hello" : "Namaste",
+          language: language,
+        });
 
         setShowForm(false);
         const botMessage = {
@@ -183,7 +179,7 @@ const Chatbot = () => {
       alert(
         language === "en"
           ? "Error saving information. Please try again."
-          : "जानकारी सुरक्षित गर्न मस्या भयो। कृपया पुन: प्रयास गर्नुहोस्।"
+          : "जानकारी सुरक्षित गर्न मस्या भयो। कृपया पुन: प्रयास गर्न��होस्।"
       );
     }
   };
@@ -392,7 +388,7 @@ const Chatbot = () => {
                 <p>
                   {language === "en"
                     ? "Are you sure you want to end this chat?"
-                    : "के तपाईं यो कुराकानी अन्त्य गर्न चाहनुहुन्छ?"}
+                    : "के तपाईं यो कुराकानी अन्त्य र्न चाहनुहुन्छ?"}
                 </p>
                 <div className="confirm-buttons">
                   <button
