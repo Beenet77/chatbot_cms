@@ -1,15 +1,10 @@
-# Django and REST framework
+# Core Django
 Django==5.0.2
 djangorestframework==3.14.0
 django-cors-headers==4.3.1
 
-# Database
-psycopg2-binary==2.9.9
-
-# Google AI
-google-generativeai==0.3.2
-google-api-core==2.17.1
-google-auth==2.27.0
+# Admin Interface
+django-jazzmin==2.6.0
 
 # Image Processing
 Pillow==10.2.0
@@ -17,26 +12,11 @@ Pillow==10.2.0
 # Environment variables
 python-dotenv==1.0.1
 
-# WSGI server
+# Google AI
+google-generativeai==0.3.2
+
+# Production Server
 gunicorn==21.2.0
 
-# Development tools
-django-debug-toolbar==4.3.0
-
-# API documentation
-drf-yasg==1.21.7
-
-# Security
-django-filter==23.5
-whitenoise==6.6.0
-
-# Testing
-pytest==8.0.1
-pytest-django==4.8.0
-
-# Code formatting
-black==24.1.1
-flake8==7.0.0
-
-# Production
-django-storages==1.14.2 
+# For serving static files in production
+whitenoise==6.6.0 
