@@ -56,11 +56,11 @@ class HandleChatView(APIView):
         cleaned_message = ' '.join(message_words)
 
         try:
-            # 1. First try exact query match with cleaned message
+            # 1. First try exact query match with cleaned message (excluding learned content)
             cms_content = CMSContent.objects.filter(
                 query__iexact=cleaned_message,
                 language=language
-            ).first()
+            ).exclude(key__startswith='learned_').first()
 
             if cms_content:
                 ChatMessage.objects.create(
@@ -73,16 +73,22 @@ class HandleChatView(APIView):
                     'source': 'cms'
                 })
 
-            # 2. Try keyword matching from query
-            message_words_set = set(message_words)  # Using cleaned words
-            cms_contents = CMSContent.objects.filter(language=language)
+            # 2. Try keyword matching from query and keywords (excluding learned content)
+            message_words_set = set(message_words)
+            cms_contents = CMSContent.objects.filter(
+                language=language
+            ).exclude(key__startswith='learned_')
             
             matches = []
             
             for content in cms_contents:
-                # Clean the query words as well
-                query_words = set([word for word in content.query.lower().split() 
-                                 if word not in stop_words])
+                query_words = set([word.strip() for word in content.query.lower().split() 
+                                 if word.strip() not in stop_words])
+                
+                if content.keywords:
+                    keyword_words = set([word.strip() for word in content.keywords.split(',')
+                                      if word.strip() not in stop_words])
+                    query_words.update(keyword_words)
                 
                 matching_words = len(message_words_set.intersection(query_words))
                 
@@ -111,7 +117,42 @@ class HandleChatView(APIView):
                     'match_count': len(best_matches)
                 })
 
-            # 3. If no matches, use Gemini and learn from it
+            # 3. Try to find match in learned content
+            learned_content = CMSContent.objects.filter(
+                key__startswith='learned_',
+                language=language
+            )
+            
+            learned_matches = []
+            for content in learned_content:
+                query_words = set([word.strip() for word in content.query.lower().split() 
+                                 if word.strip() not in stop_words])
+                matching_words = len(message_words_set.intersection(query_words))
+                
+                if matching_words > 0:
+                    learned_matches.append({
+                        'content': content,
+                        'matches': matching_words
+                    })
+
+            if learned_matches:
+                best_learned = learned_matches[:3]
+                combined_response = "\n\n---\n\n".join(
+                    [match['content'].content for match in best_learned]
+                )
+
+                ChatMessage.objects.create(
+                    user_message=message,
+                    bot_response=combined_response,
+                    language=language
+                )
+
+                return Response({
+                    'bot_response': combined_response,
+                    'source': 'learned'
+                })
+
+            # 4. If no matches, use Gemini and learn from it
             prompt = f"""
             You are a Capital Max NEPSE (Nepal Stock Exchange) assistant. 
             Answer the following question in {'Nepali' if language == 'ne' else 'English'} language:
@@ -125,13 +166,10 @@ class HandleChatView(APIView):
             response = model.generate_content(prompt)
             bot_response = response.text
 
-            # Store the new query and response in CMS if it's a valid NEPSE-related query
+            # Store the new query and response if it's NEPSE-related
             if "only answer NEPSE-related queries" not in bot_response.lower():
                 try:
-                    # Generate a unique key from the query
                     key = f"learned_{len(message_words)}_{hash(message)}"
-                    
-                    # Create new CMS content
                     CMSContent.objects.create(
                         key=key,
                         query=message,
